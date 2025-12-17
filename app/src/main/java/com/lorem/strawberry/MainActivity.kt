@@ -35,11 +35,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.lorem.strawberry.auth.SecureStorage
 import com.lorem.strawberry.data.AppSettings
 import com.lorem.strawberry.data.SettingsDataStore
+import com.lorem.strawberry.data.UsageLogger
 import com.lorem.strawberry.ui.AssistantViewModel
 import com.lorem.strawberry.ui.Message
 import com.lorem.strawberry.ui.SettingsScreen
+import com.lorem.strawberry.ui.SignInScreen
 import com.lorem.strawberry.ui.theme.StrawberryTheme
 import kotlinx.coroutines.launch
 
@@ -69,13 +72,32 @@ fun MainNavigation(autoStartListening: Boolean = false) {
     val navController = rememberNavController()
     val context = LocalContext.current
     val settingsDataStore = remember { SettingsDataStore(context) }
+    val secureStorage = remember { SecureStorage(context) }
     val settings by settingsDataStore.settings.collectAsState(initial = AppSettings())
     val scope = rememberCoroutineScope()
 
-    NavHost(navController = navController, startDestination = "assistant") {
+    // Determine start destination based on auth state
+    val startDestination = if (secureStorage.hasValidCredentials()) "assistant" else "signin"
+
+    // Set user email for usage logging
+    LaunchedEffect(secureStorage.userEmail) {
+        UsageLogger.setUserEmail(secureStorage.userEmail)
+    }
+
+    NavHost(navController = navController, startDestination = startDestination) {
+        composable("signin") {
+            SignInScreen(
+                onSignInComplete = {
+                    navController.navigate("assistant") {
+                        popUpTo("signin") { inclusive = true }
+                    }
+                }
+            )
+        }
         composable("assistant") {
             AssistantScreen(
                 settings = settings,
+                secureStorage = secureStorage,
                 onNavigateToSettings = { navController.navigate("settings") },
                 autoStartListening = autoStartListening
             )
@@ -83,13 +105,18 @@ fun MainNavigation(autoStartListening: Boolean = false) {
         composable("settings") {
             SettingsScreen(
                 settings = settings,
+                secureStorage = secureStorage,
                 onNavigateBack = { navController.popBackStack() },
-                onUpdateOpenRouterKey = { scope.launch { settingsDataStore.updateOpenRouterApiKey(it) } },
-                onUpdateCartesiaKey = { scope.launch { settingsDataStore.updateCartesiaApiKey(it) } },
                 onUpdateLlmModel = { scope.launch { settingsDataStore.updateLlmModel(it) } },
                 onUpdateTtsEngine = { scope.launch { settingsDataStore.updateTtsEngine(it) } },
                 onUpdateTtsVoice = { scope.launch { settingsDataStore.updateTtsVoice(it) } },
-                onUpdateCartesiaVoice = { scope.launch { settingsDataStore.updateCartesiaVoice(it) } }
+                onUpdateCartesiaVoice = { scope.launch { settingsDataStore.updateCartesiaVoice(it) } },
+                onSignOut = {
+                    secureStorage.clearAll()
+                    navController.navigate("signin") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
             )
         }
     }
@@ -99,6 +126,7 @@ fun MainNavigation(autoStartListening: Boolean = false) {
 @Composable
 fun AssistantScreen(
     settings: AppSettings,
+    secureStorage: SecureStorage,
     onNavigateToSettings: () -> Unit,
     autoStartListening: Boolean = false,
     viewModel: AssistantViewModel = viewModel()
@@ -106,9 +134,13 @@ fun AssistantScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    // Update ViewModel when settings change
-    LaunchedEffect(settings) {
-        viewModel.updateSettings(settings)
+    // Update ViewModel when settings change, using server-provided keys
+    LaunchedEffect(settings, secureStorage.openRouterApiKey, secureStorage.cartesiaApiKey) {
+        val effectiveSettings = settings.copy(
+            openRouterApiKey = secureStorage.openRouterApiKey ?: "",
+            cartesiaApiKey = secureStorage.cartesiaApiKey ?: ""
+        )
+        viewModel.updateSettings(effectiveSettings)
     }
 
     var hasPermission by remember {

@@ -3,19 +3,16 @@ package com.lorem.strawberry.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.lorem.strawberry.auth.SecureStorage
 import com.lorem.strawberry.data.AppSettings
 import com.lorem.strawberry.data.TtsEngine
 import com.lorem.strawberry.speech.availableCartesiaVoices
@@ -42,22 +39,19 @@ val availableTtsEngines = listOf(
 @Composable
 fun SettingsScreen(
     settings: AppSettings,
+    secureStorage: SecureStorage,
     onNavigateBack: () -> Unit,
-    onUpdateOpenRouterKey: (String) -> Unit,
-    onUpdateCartesiaKey: (String) -> Unit,
     onUpdateLlmModel: (String) -> Unit,
     onUpdateTtsEngine: (String) -> Unit,
     onUpdateTtsVoice: (String) -> Unit,
-    onUpdateCartesiaVoice: (String) -> Unit
+    onUpdateCartesiaVoice: (String) -> Unit,
+    onSignOut: () -> Unit
 ) {
-    var openRouterKey by remember(settings.openRouterApiKey) { mutableStateOf(settings.openRouterApiKey) }
-    var cartesiaKey by remember(settings.cartesiaApiKey) { mutableStateOf(settings.cartesiaApiKey) }
-    var showOpenRouterKey by remember { mutableStateOf(false) }
-    var showCartesiaKey by remember { mutableStateOf(false) }
     var showVoiceDialog by remember { mutableStateOf(false) }
     var showCartesiaVoiceDialog by remember { mutableStateOf(false) }
     var showLlmModelDialog by remember { mutableStateOf(false) }
     var showTtsEngineDialog by remember { mutableStateOf(false) }
+    var showSignOutDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -77,25 +71,20 @@ fun SettingsScreen(
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
         ) {
-            // API Keys Section
-            SectionHeader("API Keys")
+            // Account Section
+            SectionHeader("Account")
 
-            ApiKeyField(
-                label = "OpenRouter API Key",
-                value = openRouterKey,
-                onValueChange = { openRouterKey = it },
-                onSave = { onUpdateOpenRouterKey(openRouterKey) },
-                isVisible = showOpenRouterKey,
-                onToggleVisibility = { showOpenRouterKey = !showOpenRouterKey }
+            ListItem(
+                headlineContent = { Text(secureStorage.userName ?: "User") },
+                supportingContent = { Text(secureStorage.userEmail ?: "") }
             )
 
-            ApiKeyField(
-                label = "Cartesia API Key",
-                value = cartesiaKey,
-                onValueChange = { cartesiaKey = it },
-                onSave = { onUpdateCartesiaKey(cartesiaKey) },
-                isVisible = showCartesiaKey,
-                onToggleVisibility = { showCartesiaKey = !showCartesiaKey }
+            ListItem(
+                headlineContent = { Text("Sign Out") },
+                leadingContent = {
+                    Icon(Icons.Default.Logout, contentDescription = null)
+                },
+                modifier = Modifier.clickable { showSignOutDialog = true }
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
@@ -318,6 +307,30 @@ fun SettingsScreen(
             }
         )
     }
+
+    // Sign Out Confirmation Dialog
+    if (showSignOutDialog) {
+        AlertDialog(
+            onDismissRequest = { showSignOutDialog = false },
+            title = { Text("Sign Out") },
+            text = { Text("Are you sure you want to sign out?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showSignOutDialog = false
+                        onSignOut()
+                    }
+                ) {
+                    Text("Sign Out")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSignOutDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -328,55 +341,4 @@ fun SectionHeader(title: String) {
         color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
     )
-}
-
-@Composable
-fun ApiKeyField(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    onSave: () -> Unit,
-    isVisible: Boolean,
-    onToggleVisibility: () -> Unit
-) {
-    var hasChanges by remember { mutableStateOf(false) }
-
-    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = {
-                onValueChange(it)
-                hasChanges = true
-            },
-            label = { Text(label) },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            visualTransformation = if (isVisible) {
-                VisualTransformation.None
-            } else {
-                PasswordVisualTransformation()
-            },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            trailingIcon = {
-                IconButton(onClick = onToggleVisibility) {
-                    Icon(
-                        imageVector = if (isVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                        contentDescription = if (isVisible) "Hide" else "Show"
-                    )
-                }
-            }
-        )
-
-        if (hasChanges) {
-            TextButton(
-                onClick = {
-                    onSave()
-                    hasChanges = false
-                },
-                modifier = Modifier.padding(top = 4.dp)
-            ) {
-                Text("Save")
-            }
-        }
-    }
 }

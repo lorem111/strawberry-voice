@@ -11,25 +11,49 @@ Download at: https://github.com/lorem111/strawberry-voice/releases/tag/v0.10
 - **Streaming TTS**: Ultra-low latency voice responses with Cartesia Sonic
 - **Auto-conversation**: Automatically resumes listening after AI responds
 - **Multiple TTS Options**: Cartesia (streaming), Google Chirp, or local TTS
+- **Google Sign-In**: Secure authentication with per-user API keys
 
 ## Setup
 
-### 1. Get API Keys
+### For Users
 
-You'll need API keys from:
+1. Download the APK from releases
+2. Install and open the app
+3. Sign in with your Google account
+4. Start chatting!
 
-- **OpenRouter** (required): https://openrouter.ai/keys
-  - Provides access to various LLM models (Gemini, Claude, GPT, Llama, etc.)
+### For Developers
 
-- **Cartesia** (recommended): https://cartesia.ai/
-  - Low-latency streaming text-to-speech
-  - Sign up and get API key from dashboard
+#### 1. Google Cloud Console Setup
 
-### 2. Build & Install
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing
+3. Enable the Google Identity Services API
+4. Go to **APIs & Services** > **Credentials**
+5. Create an **OAuth 2.0 Client ID** (Web application type)
+6. Copy the Client ID - this is your `GOOGLE_WEB_CLIENT_ID`
+
+#### 2. Configure Build
+
+Add to `local.properties`:
+
+```properties
+GOOGLE_WEB_CLIENT_ID=your-client-id.apps.googleusercontent.com
+AUTH_SERVER_URL=https://your-auth-server.vercel.app
+```
+
+#### 3. Auth Server Setup
+
+See the `authserver/` directory for the Vercel backend that handles:
+- Google token verification
+- OpenRouter key provisioning
+- User management
+
+#### 4. Build & Install
 
 1. Open the project in Android Studio
 2. Build and install on your device
-3. Open Settings in the app and enter your API keys
+3. Sign in with Google to get your API keys automatically
 
 ## Architecture
 

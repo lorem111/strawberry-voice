@@ -21,3 +21,6 @@ app/release/
 
 # Secrets
 secrets.properties
+
+# Auth server (deployed separately)
+authserver/

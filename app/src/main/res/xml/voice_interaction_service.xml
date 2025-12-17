@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <voice-interaction-service xmlns:android="http://schemas.android.com/apk/res/android"
-    android:sessionService="com.example.voiceassistant.assistant.AssistantSessionService"
-    android:recognitionService="com.example.voiceassistant.assistant.AssistantRecognitionService"
-    android:settingsActivity="com.example.voiceassistant.MainActivity"
+    android:sessionService="com.lorem.strawberry.assistant.AssistantSessionService"
+    android:recognitionService="com.lorem.strawberry.assistant.AssistantRecognitionService"
+    android:settingsActivity="com.lorem.strawberry.MainActivity"
     android:supportsAssist="true"
     android:supportsLaunchVoiceAssistFromKeyguard="true"
     android:supportsLocalInteraction="true" />

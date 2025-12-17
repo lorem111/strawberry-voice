@@ -1,8 +1,17 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+}
+
+// Load local.properties
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
 }
 
 android {
@@ -17,6 +26,11 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Google OAuth Web Client ID (get from Google Cloud Console)
+        // This is the WEB client ID, not the Android one
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"${localProperties.getProperty("GOOGLE_WEB_CLIENT_ID", "")}\"")
+        buildConfigField("String", "AUTH_SERVER_URL", "\"${localProperties.getProperty("AUTH_SERVER_URL", "https://strawberry-auth.vercel.app")}\"")
     }
 
     buildTypes {
@@ -69,6 +83,12 @@ dependencies {
 
     // Navigation
     implementation(libs.androidx.navigation.compose)
+
+    // Google Sign-In (Legacy)
+    implementation(libs.play.services.auth)
+
+    // Encrypted SharedPreferences
+    implementation(libs.security.crypto)
 
     debugImplementation(libs.androidx.ui.tooling)
 }

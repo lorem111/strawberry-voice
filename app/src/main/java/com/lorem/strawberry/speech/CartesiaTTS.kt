@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import com.lorem.strawberry.data.UsageLogger
 
 @Serializable
 data class CartesiaRequest(
@@ -150,6 +151,14 @@ class CartesiaTTS(private val apiKey: String) {
                 val startTime = System.currentTimeMillis()
 
                 streamAudio(text, voiceId, startTime)
+
+                // Log TTS usage
+                val durationMs = System.currentTimeMillis() - startTime
+                UsageLogger.logTtsUsage(
+                    engine = "cartesia",
+                    durationMs = durationMs,
+                    textLength = text.length
+                )
 
             } catch (e: Exception) {
                 Log.e(TAG, "Cartesia TTS error", e)
