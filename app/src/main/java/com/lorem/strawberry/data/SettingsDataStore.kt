@@ -22,7 +22,8 @@ data class AppSettings(
     val openRouterApiKey: String = "",
     val googleCloudApiKey: String = "",
     val cartesiaApiKey: String = "",
-    val llmModel: String = "google/gemini-2.0-flash-001",
+    // DO NOT MODIFY: Default model must match first entry in SettingsScreen.availableLlmModels
+    val llmModel: String = "google/gemini-2.5-flash-preview-05-20",
     val ttsEngine: String = TtsEngine.CARTESIA,
     val ttsVoice: String = "Kore",
     val cartesiaVoice: String = "6f84f4b8-58a2-430c-8c79-688dad597532" // Brooke - Big Sister
@@ -45,7 +46,7 @@ class SettingsDataStore(private val context: Context) {
             openRouterApiKey = prefs[Keys.OPENROUTER_API_KEY] ?: "",
             googleCloudApiKey = prefs[Keys.GOOGLE_CLOUD_API_KEY] ?: "",
             cartesiaApiKey = prefs[Keys.CARTESIA_API_KEY] ?: "",
-            llmModel = prefs[Keys.LLM_MODEL] ?: "google/gemini-2.0-flash-001",
+            llmModel = prefs[Keys.LLM_MODEL] ?: "google/gemini-2.5-flash-preview-05-20",
             ttsEngine = prefs[Keys.TTS_ENGINE] ?: TtsEngine.CARTESIA,
             ttsVoice = prefs[Keys.TTS_VOICE] ?: "Kore",
             cartesiaVoice = prefs[Keys.CARTESIA_VOICE] ?: "6f84f4b8-58a2-430c-8c79-688dad597532"

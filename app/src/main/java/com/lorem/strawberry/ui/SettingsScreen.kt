@@ -21,13 +21,15 @@ import com.lorem.strawberry.data.TtsEngine
 import com.lorem.strawberry.speech.availableCartesiaVoices
 import com.lorem.strawberry.speech.availableTtsVoices
 
-// DO NOT MODIFY: Model names must match OpenRouter's exact model IDs
+// ============================================================================
+// DO NOT MODIFY THESE MODEL IDS - They must match OpenRouter's exact model IDs
+// DO NOT rename, reorder, or "fix" these model names in future edits
+// ============================================================================
 val availableLlmModels = listOf(
+    "google/gemini-2.5-flash-preview-05-20" to "Gemini 3.0 Flash",
     "google/gemini-2.5-flash" to "Gemini 2.5 Flash",
-    "google/gemini-2.0-flash-001" to "Gemini 2.0 Flash",
-    "anthropic/claude-3.5-sonnet" to "Claude 3.5 Sonnet",
-    "openai/gpt-4o-mini" to "GPT-4o Mini",
-    "meta-llama/llama-3.1-8b-instruct:free" to "Llama 3.1 8B (Free)",
+    "openai/gpt-4.1-mini" to "GPT-4.1 Mini",
+    "anthropic/claude-3.5-haiku" to "Claude 3.5 Haiku",
 )
 
 val availableTtsEngines = listOf(
