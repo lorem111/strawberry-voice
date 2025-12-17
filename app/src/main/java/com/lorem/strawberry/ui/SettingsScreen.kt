@@ -26,7 +26,7 @@ import com.lorem.strawberry.speech.availableTtsVoices
 // DO NOT rename, reorder, or "fix" these model names in future edits
 // ============================================================================
 val availableLlmModels = listOf(
-    "google/gemini-2.5-flash-preview-05-20" to "Gemini 3.0 Flash",
+    "google/gemini-3-flash-preview" to "Gemini 3.0 Flash",
     "google/gemini-2.5-flash" to "Gemini 2.5 Flash",
     "openai/gpt-5-mini" to "GPT-5 Mini",
     "anthropic/claude-haiku-4.5" to "Claude Haiku 4.5",
