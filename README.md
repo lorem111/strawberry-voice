@@ -2,6 +2,8 @@
 
 A voice assistant Android app with low-latency streaming text-to-speech.
 
+Download at: https://github.com/lorem111/strawberry-voice/releases/tag/v0.10
+
 ## Features
 
 - **Voice Input**: Tap the mic to speak, automatic speech recognition
