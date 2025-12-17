@@ -1,4 +1,4 @@
-package com.example.voiceassistant.speech
+package com.lorem.strawberry.speech
 
 import android.media.AudioAttributes
 import android.media.AudioFormat

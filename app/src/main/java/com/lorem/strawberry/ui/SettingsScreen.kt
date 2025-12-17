@@ -1,4 +1,4 @@
-package com.example.voiceassistant.ui
+package com.lorem.strawberry.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,10 +16,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import com.example.voiceassistant.data.AppSettings
-import com.example.voiceassistant.data.TtsEngine
-import com.example.voiceassistant.speech.availableCartesiaVoices
-import com.example.voiceassistant.speech.availableTtsVoices
+import com.lorem.strawberry.data.AppSettings
+import com.lorem.strawberry.data.TtsEngine
+import com.lorem.strawberry.speech.availableCartesiaVoices
+import com.lorem.strawberry.speech.availableTtsVoices
 
 // DO NOT MODIFY: Model names must match OpenRouter's exact model IDs
 val availableLlmModels = listOf(
@@ -378,4 +378,3 @@ fun ApiKeyField(
         }
     }
 }
-

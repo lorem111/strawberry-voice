@@ -1,4 +1,4 @@
-package com.example.voiceassistant.assistant
+package com.lorem.strawberry.assistant
 
 import android.service.voice.VoiceInteractionService
 import android.util.Log

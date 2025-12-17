@@ -1,4 +1,4 @@
-package com.example.voiceassistant
+package com.lorem.strawberry
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -35,12 +35,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.voiceassistant.data.AppSettings
-import com.example.voiceassistant.data.SettingsDataStore
-import com.example.voiceassistant.ui.AssistantViewModel
-import com.example.voiceassistant.ui.Message
-import com.example.voiceassistant.ui.SettingsScreen
-import com.example.voiceassistant.ui.theme.StrawberryTheme
+import com.lorem.strawberry.data.AppSettings
+import com.lorem.strawberry.data.SettingsDataStore
+import com.lorem.strawberry.ui.AssistantViewModel
+import com.lorem.strawberry.ui.Message
+import com.lorem.strawberry.ui.SettingsScreen
+import com.lorem.strawberry.ui.theme.StrawberryTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {

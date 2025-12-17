@@ -1,4 +1,4 @@
-package com.example.voiceassistant.data
+package com.lorem.strawberry.data
 
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -66,8 +66,8 @@ class OpenRouterApi(private val apiKey: String) {
             val response: ChatResponse = client.post("https://openrouter.ai/api/v1/chat/completions") {
                 contentType(ContentType.Application.Json)
                 header("Authorization", "Bearer $apiKey")
-                header("HTTP-Referer", "https://github.com/voiceassistant")
-                header("X-Title", "Voice Assistant")
+                header("HTTP-Referer", "https://github.com/lorem111/strawberry-voice")
+                header("X-Title", "Strawberry Voice Assistant")
                 setBody(ChatRequest(model = model, messages = allMessages))
             }.body()
 

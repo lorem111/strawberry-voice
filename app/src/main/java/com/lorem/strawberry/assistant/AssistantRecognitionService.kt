@@ -1,4 +1,4 @@
-package com.example.voiceassistant.assistant
+package com.lorem.strawberry.assistant
 
 import android.content.Intent
 import android.os.Bundle

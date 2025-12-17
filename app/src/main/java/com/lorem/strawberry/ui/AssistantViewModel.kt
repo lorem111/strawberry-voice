@@ -1,17 +1,17 @@
-package com.example.voiceassistant.ui
+package com.lorem.strawberry.ui
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.voiceassistant.data.AppSettings
-import com.example.voiceassistant.data.ChatMessage
-import com.example.voiceassistant.data.OpenRouterApi
-import com.example.voiceassistant.data.TtsEngine
-import com.example.voiceassistant.speech.CartesiaTTS
-import com.example.voiceassistant.speech.GoogleCloudTTS
-import com.example.voiceassistant.speech.LocalTTS
-import com.example.voiceassistant.speech.SpeechRecognizerManager
-import com.example.voiceassistant.speech.SpeechState
+import com.lorem.strawberry.data.AppSettings
+import com.lorem.strawberry.data.ChatMessage
+import com.lorem.strawberry.data.OpenRouterApi
+import com.lorem.strawberry.data.TtsEngine
+import com.lorem.strawberry.speech.CartesiaTTS
+import com.lorem.strawberry.speech.GoogleCloudTTS
+import com.lorem.strawberry.speech.LocalTTS
+import com.lorem.strawberry.speech.SpeechRecognizerManager
+import com.lorem.strawberry.speech.SpeechState
 import android.util.Log
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow

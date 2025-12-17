@@ -1,4 +1,4 @@
-package com.example.voiceassistant.ui.theme
+package com.lorem.strawberry.ui.theme
 
 import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme

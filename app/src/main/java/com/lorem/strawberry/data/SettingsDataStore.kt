@@ -1,4 +1,4 @@
-package com.example.voiceassistant.data
+package com.lorem.strawberry.data
 
 import android.content.Context
 import androidx.datastore.core.DataStore

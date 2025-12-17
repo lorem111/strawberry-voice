@@ -1,4 +1,4 @@
-package com.example.voiceassistant.speech
+package com.lorem.strawberry.speech
 
 import android.content.Context
 import android.speech.tts.TextToSpeech

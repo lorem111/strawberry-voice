@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.voiceassistant"
+    namespace = "com.lorem.strawberry"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.voiceassistant"
+        applicationId = "com.lorem.strawberry"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
