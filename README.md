@@ -2,7 +2,7 @@
 
 A voice assistant Android app with low-latency streaming text-to-speech.
 
-Download at: https://github.com/lorem111/strawberry-voice/releases/tag/v0.10
+Download at: [https://github.com/lorem111/strawberry-voice/releases/tag/v0.11](https://github.com/lorem111/strawberry-voice/releases/tag/v0.11)
 
 ## Features
 
@@ -73,3 +73,4 @@ See the `authserver/` directory for the Vercel backend that handles:
 ## License
 
 MIT License
+
