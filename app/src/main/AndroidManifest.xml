@@ -7,6 +7,11 @@
     <!-- Required for OpenRouter API calls -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Required for Car Mode (Bluetooth hands-free) -->
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
     <!-- Optional: for network state checking -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 

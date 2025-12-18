@@ -26,10 +26,16 @@ class SecureStorage(context: Context) {
     companion object {
         private const val KEY_OPENROUTER_API_KEY = "openrouter_api_key"
         private const val KEY_CARTESIA_API_KEY = "cartesia_api_key"
+        private const val KEY_GOOGLE_CLOUD_API_KEY = "google_cloud_api_key"
+        private const val KEY_FEATURE_FLAGS = "feature_flags"
         private const val KEY_USER_EMAIL = "user_email"
         private const val KEY_USER_NAME = "user_name"
         private const val KEY_USER_PICTURE = "user_picture"
         private const val KEY_IS_SIGNED_IN = "is_signed_in"
+
+        // Feature flag constants
+        const val FLAG_GEMINI_SEARCH = "gemini-search"
+        const val FLAG_CAR_MODE = "car-mode"
     }
 
     var openRouterApiKey: String?
@@ -39,6 +45,16 @@ class SecureStorage(context: Context) {
     var cartesiaApiKey: String?
         get() = securePrefs.getString(KEY_CARTESIA_API_KEY, null)
         set(value) = securePrefs.edit().putString(KEY_CARTESIA_API_KEY, value).apply()
+
+    var googleCloudApiKey: String?
+        get() = securePrefs.getString(KEY_GOOGLE_CLOUD_API_KEY, null)
+        set(value) = securePrefs.edit().putString(KEY_GOOGLE_CLOUD_API_KEY, value).apply()
+
+    var featureFlags: Set<String>
+        get() = securePrefs.getStringSet(KEY_FEATURE_FLAGS, emptySet()) ?: emptySet()
+        set(value) = securePrefs.edit().putStringSet(KEY_FEATURE_FLAGS, value).apply()
+
+    fun hasFeatureFlag(flag: String): Boolean = featureFlags.contains(flag)
 
     var userEmail: String?
         get() = securePrefs.getString(KEY_USER_EMAIL, null)
@@ -59,6 +75,8 @@ class SecureStorage(context: Context) {
     fun saveAuthResponse(response: AuthResponse) {
         openRouterApiKey = response.openRouterKey
         cartesiaApiKey = response.cartesiaKey
+        googleCloudApiKey = response.googleCloudKey
+        featureFlags = response.featureFlags?.toSet() ?: emptySet()
         response.user?.let { user ->
             userEmail = user.email
             userName = user.name

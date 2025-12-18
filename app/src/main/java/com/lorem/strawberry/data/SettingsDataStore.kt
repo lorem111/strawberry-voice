@@ -3,6 +3,7 @@ package com.lorem.strawberry.data
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -26,7 +27,10 @@ data class AppSettings(
     val llmModel: String = "google/gemini-3-flash-preview",
     val ttsEngine: String = TtsEngine.CARTESIA,
     val ttsVoice: String = "Kore",
-    val cartesiaVoice: String = "6f84f4b8-58a2-430c-8c79-688dad597532" // Brooke - Big Sister
+    val cartesiaVoice: String = "6f84f4b8-58a2-430c-8c79-688dad597532", // Brooke - Big Sister
+    val continuousListening: Boolean = false,  // Auto-restart listening after silence
+    val carMode: Boolean = false,              // Use Bluetooth SCO for hands-free audio
+    val geminiSearch: Boolean = false          // Use Gemini with Google Search grounding
 )
 
 class SettingsDataStore(private val context: Context) {
@@ -39,6 +43,9 @@ class SettingsDataStore(private val context: Context) {
         val TTS_ENGINE = stringPreferencesKey("tts_engine")
         val TTS_VOICE = stringPreferencesKey("tts_voice")
         val CARTESIA_VOICE = stringPreferencesKey("cartesia_voice")
+        val CONTINUOUS_LISTENING = booleanPreferencesKey("continuous_listening")
+        val CAR_MODE = booleanPreferencesKey("car_mode")
+        val GEMINI_SEARCH = booleanPreferencesKey("gemini_search")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -49,7 +56,10 @@ class SettingsDataStore(private val context: Context) {
             llmModel = prefs[Keys.LLM_MODEL] ?: "google/gemini-3-flash-preview",
             ttsEngine = prefs[Keys.TTS_ENGINE] ?: TtsEngine.CARTESIA,
             ttsVoice = prefs[Keys.TTS_VOICE] ?: "Kore",
-            cartesiaVoice = prefs[Keys.CARTESIA_VOICE] ?: "6f84f4b8-58a2-430c-8c79-688dad597532"
+            cartesiaVoice = prefs[Keys.CARTESIA_VOICE] ?: "6f84f4b8-58a2-430c-8c79-688dad597532",
+            continuousListening = prefs[Keys.CONTINUOUS_LISTENING] ?: false,
+            carMode = prefs[Keys.CAR_MODE] ?: false,
+            geminiSearch = prefs[Keys.GEMINI_SEARCH] ?: false
         )
     }
 
@@ -92,6 +102,24 @@ class SettingsDataStore(private val context: Context) {
     suspend fun updateCartesiaVoice(voice: String) {
         context.dataStore.edit { prefs ->
             prefs[Keys.CARTESIA_VOICE] = voice
+        }
+    }
+
+    suspend fun updateContinuousListening(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.CONTINUOUS_LISTENING] = enabled
+        }
+    }
+
+    suspend fun updateCarMode(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.CAR_MODE] = enabled
+        }
+    }
+
+    suspend fun updateGeminiSearch(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.GEMINI_SEARCH] = enabled
         }
     }
 }

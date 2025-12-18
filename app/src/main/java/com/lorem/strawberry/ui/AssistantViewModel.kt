@@ -3,8 +3,10 @@ package com.lorem.strawberry.ui
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.lorem.strawberry.audio.BluetoothScoManager
 import com.lorem.strawberry.data.AppSettings
 import com.lorem.strawberry.data.ChatMessage
+import com.lorem.strawberry.data.GeminiApi
 import com.lorem.strawberry.data.OpenRouterApi
 import com.lorem.strawberry.data.TtsEngine
 import com.lorem.strawberry.speech.CartesiaTTS
@@ -38,9 +40,11 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
 
     private val context = application
     private val speechManager = SpeechRecognizerManager(application)
+    private val bluetoothScoManager = BluetoothScoManager(application)
 
     private var currentSettings = AppSettings()
     private var openRouterApi: OpenRouterApi? = null
+    private var geminiApi: GeminiApi? = null
     private var chirpTts: GoogleCloudTTS? = null
     private var cartesiaTts: CartesiaTTS? = null
     private var localTts: LocalTTS? = null
@@ -85,7 +89,7 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
             } else null
         }
 
-        // Update Chirp TTS if Google Cloud key changed or first load
+        // Update Chirp TTS and Gemini API if Google Cloud key changed or first load
         if (isFirstLoad || settings.googleCloudApiKey != currentSettings.googleCloudApiKey) {
             chirpObserverJob?.cancel()
             chirpTts?.destroy()
@@ -93,6 +97,12 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
                 GoogleCloudTTS(context, settings.googleCloudApiKey).also { tts ->
                     observeChirpTtsState(tts)
                 }
+            } else null
+
+            // Initialize Gemini API with same Google Cloud key
+            geminiApi?.close()
+            geminiApi = if (settings.googleCloudApiKey.isNotBlank()) {
+                GeminiApi(settings.googleCloudApiKey)
             } else null
         }
 
@@ -113,6 +123,20 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
             localObserverJob?.cancel()
             localTts = LocalTTS(context).also { tts ->
                 observeLocalTtsState(tts)
+            }
+        }
+
+        // Update continuous listening mode
+        speechManager.continuousListening = settings.continuousListening
+
+        // Update car mode (Bluetooth SCO)
+        if (settings.carMode != currentSettings.carMode || isFirstLoad) {
+            if (settings.carMode) {
+                Log.d(TAG, "Enabling car mode (Bluetooth SCO)")
+                bluetoothScoManager.start()
+            } else {
+                Log.d(TAG, "Disabling car mode (Bluetooth SCO)")
+                bluetoothScoManager.stop()
             }
         }
 
@@ -169,12 +193,12 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
                 Log.d(TAG, "Chirp TTS state: speaking=$speaking, wasSpeaking=$wasSpeaking, engine=${currentSettings.ttsEngine}")
                 if (currentSettings.ttsEngine == TtsEngine.CHIRP) {
                     _uiState.value = _uiState.value.copy(isSpeaking = speaking)
-                    // Auto-start listening when TTS finishes
+                    // Auto-start listening when TTS finishes (silently to avoid beep)
                     if (wasSpeaking && !speaking) {
-                        Log.d(TAG, "Chirp TTS finished, triggering auto-listen")
+                        Log.d(TAG, "Chirp TTS finished, triggering silent auto-listen")
                         viewModelScope.launch {
                             kotlinx.coroutines.delay(300)
-                            startListening()
+                            startListeningSilent()
                         }
                     }
                     wasSpeaking = speaking
@@ -193,12 +217,12 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
                         isSpeaking = speaking,
                         ttsLatencyMs = if (!speaking) null else _uiState.value.ttsLatencyMs
                     )
-                    // Auto-start listening when TTS finishes
+                    // Auto-start listening when TTS finishes (silently to avoid beep)
                     if (wasSpeaking && !speaking) {
-                        Log.d(TAG, "Cartesia TTS finished, triggering auto-listen")
+                        Log.d(TAG, "Cartesia TTS finished, triggering silent auto-listen")
                         viewModelScope.launch {
                             kotlinx.coroutines.delay(300)
-                            startListening()
+                            startListeningSilent()
                         }
                     }
                     wasSpeaking = speaking
@@ -221,12 +245,12 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
                 Log.d(TAG, "Local TTS state: speaking=$speaking, wasSpeaking=$wasSpeaking, engine=${currentSettings.ttsEngine}")
                 if (currentSettings.ttsEngine == TtsEngine.LOCAL) {
                     _uiState.value = _uiState.value.copy(isSpeaking = speaking)
-                    // Auto-start listening when TTS finishes
+                    // Auto-start listening when TTS finishes (silently to avoid beep)
                     if (wasSpeaking && !speaking) {
-                        Log.d(TAG, "Local TTS finished, triggering auto-listen")
+                        Log.d(TAG, "Local TTS finished, triggering silent auto-listen")
                         viewModelScope.launch {
                             kotlinx.coroutines.delay(300)
-                            startListening()
+                            startListeningSilent()
                         }
                     }
                     wasSpeaking = speaking
@@ -242,17 +266,38 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
         speechManager.startListening()
     }
 
+    /**
+     * Start listening without the beep sound - used for auto-restart after TTS.
+     */
+    private fun startListeningSilent() {
+        Log.d(TAG, "startListeningSilent() called")
+        stopSpeaking()
+        speechManager.resetState()
+        speechManager.startListeningSilent()
+    }
+
     fun stopListening() {
         speechManager.stopListening()
     }
 
     private fun handleUserQuery(query: String) {
-        val api = openRouterApi
-        if (api == null) {
-            _uiState.value = _uiState.value.copy(
-                error = "Please set your OpenRouter API key in Settings"
-            )
-            return
+        val useGeminiSearch = currentSettings.geminiSearch
+
+        // Check if we have the right API configured
+        if (useGeminiSearch) {
+            if (geminiApi == null) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Google Cloud API key not configured. Please sign out and sign in again."
+                )
+                return
+            }
+        } else {
+            if (openRouterApi == null) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Please set your OpenRouter API key in Settings"
+                )
+                return
+            }
         }
 
         // Add user message to UI
@@ -270,26 +315,65 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
 
         // Send to LLM
         viewModelScope.launch {
-            val result = api.chat(conversationHistory, model = currentSettings.llmModel, systemPrompt = systemPrompt)
-
-            result.onSuccess { response ->
-                conversationHistory.add(ChatMessage(role = "assistant", content = response))
-
-                // Remove loading message and add actual response
-                val currentMessages = _uiState.value.messages.dropLast(1)
-                _uiState.value = _uiState.value.copy(
-                    messages = currentMessages + Message(content = response, isUser = false)
+            if (useGeminiSearch) {
+                // Use Gemini API with Google Search grounding
+                val result = geminiApi!!.chat(
+                    messages = conversationHistory,
+                    systemPrompt = systemPrompt,
+                    enableSearch = true
                 )
 
-                // Speak the response with selected TTS engine
-                speakResponse(response)
-            }.onFailure { error ->
-                // Remove loading message
-                val currentMessages = _uiState.value.messages.dropLast(1)
-                _uiState.value = _uiState.value.copy(
-                    messages = currentMessages,
-                    error = "Failed to get response: ${error.message}"
+                result.onSuccess { geminiResult ->
+                    conversationHistory.add(ChatMessage(role = "assistant", content = geminiResult.text))
+
+                    // Remove loading message and add actual response
+                    val currentMessages = _uiState.value.messages.dropLast(1)
+                    _uiState.value = _uiState.value.copy(
+                        messages = currentMessages + Message(content = geminiResult.text, isUser = false)
+                    )
+
+                    // Log sources if available
+                    if (geminiResult.sources.isNotEmpty()) {
+                        Log.d(TAG, "Gemini sources: ${geminiResult.sources.map { it.title }}")
+                    }
+
+                    // Speak the response with selected TTS engine
+                    speakResponse(geminiResult.text)
+                }.onFailure { error ->
+                    // Remove loading message
+                    val currentMessages = _uiState.value.messages.dropLast(1)
+                    _uiState.value = _uiState.value.copy(
+                        messages = currentMessages,
+                        error = "Failed to get response: ${error.message}"
+                    )
+                }
+            } else {
+                // Use OpenRouter API
+                val result = openRouterApi!!.chat(
+                    conversationHistory,
+                    model = currentSettings.llmModel,
+                    systemPrompt = systemPrompt
                 )
+
+                result.onSuccess { response ->
+                    conversationHistory.add(ChatMessage(role = "assistant", content = response))
+
+                    // Remove loading message and add actual response
+                    val currentMessages = _uiState.value.messages.dropLast(1)
+                    _uiState.value = _uiState.value.copy(
+                        messages = currentMessages + Message(content = response, isUser = false)
+                    )
+
+                    // Speak the response with selected TTS engine
+                    speakResponse(response)
+                }.onFailure { error ->
+                    // Remove loading message
+                    val currentMessages = _uiState.value.messages.dropLast(1)
+                    _uiState.value = _uiState.value.copy(
+                        messages = currentMessages,
+                        error = "Failed to get response: ${error.message}"
+                    )
+                }
             }
         }
     }
@@ -334,5 +418,6 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
         cartesiaTts?.destroy()
         localTts?.destroy()
         openRouterApi?.close()
+        bluetoothScoManager.destroy()
     }
 }

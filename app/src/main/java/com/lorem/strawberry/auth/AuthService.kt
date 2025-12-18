@@ -28,6 +28,8 @@ data class AuthResponse(
     val success: Boolean,
     val openRouterKey: String? = null,
     val cartesiaKey: String? = null,
+    val googleCloudKey: String? = null,
+    val featureFlags: List<String>? = null,
     val user: AuthUser? = null,
     val error: String? = null
 )

@@ -111,6 +111,9 @@ fun MainNavigation(autoStartListening: Boolean = false) {
                 onUpdateTtsEngine = { scope.launch { settingsDataStore.updateTtsEngine(it) } },
                 onUpdateTtsVoice = { scope.launch { settingsDataStore.updateTtsVoice(it) } },
                 onUpdateCartesiaVoice = { scope.launch { settingsDataStore.updateCartesiaVoice(it) } },
+                onUpdateContinuousListening = { scope.launch { settingsDataStore.updateContinuousListening(it) } },
+                onUpdateCarMode = { scope.launch { settingsDataStore.updateCarMode(it) } },
+                onUpdateGeminiSearch = { scope.launch { settingsDataStore.updateGeminiSearch(it) } },
                 onSignOut = {
                     secureStorage.clearAll()
                     navController.navigate("signin") {
@@ -135,10 +138,11 @@ fun AssistantScreen(
     val context = LocalContext.current
 
     // Update ViewModel when settings change, using server-provided keys
-    LaunchedEffect(settings, secureStorage.openRouterApiKey, secureStorage.cartesiaApiKey) {
+    LaunchedEffect(settings, secureStorage.openRouterApiKey, secureStorage.cartesiaApiKey, secureStorage.googleCloudApiKey) {
         val effectiveSettings = settings.copy(
             openRouterApiKey = secureStorage.openRouterApiKey ?: "",
-            cartesiaApiKey = secureStorage.cartesiaApiKey ?: ""
+            cartesiaApiKey = secureStorage.cartesiaApiKey ?: "",
+            googleCloudApiKey = secureStorage.googleCloudApiKey ?: ""
         )
         viewModel.updateSettings(effectiveSettings)
     }

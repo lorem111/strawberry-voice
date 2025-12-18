@@ -45,6 +45,9 @@ fun SettingsScreen(
     onUpdateTtsEngine: (String) -> Unit,
     onUpdateTtsVoice: (String) -> Unit,
     onUpdateCartesiaVoice: (String) -> Unit,
+    onUpdateContinuousListening: (Boolean) -> Unit,
+    onUpdateCarMode: (Boolean) -> Unit,
+    onUpdateGeminiSearch: (Boolean) -> Unit,
     onSignOut: () -> Unit
 ) {
     var showVoiceDialog by remember { mutableStateOf(false) }
@@ -135,6 +138,51 @@ fun SettingsScreen(
                     headlineContent = { Text("Voice") },
                     supportingContent = { Text(currentCartesiaVoiceName) },
                     modifier = Modifier.clickable { showCartesiaVoiceDialog = true }
+                )
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+
+            // Settings Section
+            SectionHeader("Settings")
+
+            // Continuous Listening - always visible
+            ListItem(
+                headlineContent = { Text("Continuous Listening") },
+                supportingContent = { Text("Keep listening after silence (for long sessions)") },
+                trailingContent = {
+                    Switch(
+                        checked = settings.continuousListening,
+                        onCheckedChange = { onUpdateContinuousListening(it) }
+                    )
+                }
+            )
+
+            // Car Mode - only visible with feature flag
+            if (secureStorage.hasFeatureFlag(SecureStorage.FLAG_CAR_MODE)) {
+                ListItem(
+                    headlineContent = { Text("Car Mode") },
+                    supportingContent = { Text("Route audio through Bluetooth hands-free (appears as phone call)") },
+                    trailingContent = {
+                        Switch(
+                            checked = settings.carMode,
+                            onCheckedChange = { onUpdateCarMode(it) }
+                        )
+                    }
+                )
+            }
+
+            // Gemini Search - only visible with feature flag
+            if (secureStorage.hasFeatureFlag(SecureStorage.FLAG_GEMINI_SEARCH)) {
+                ListItem(
+                    headlineContent = { Text("Gemini Search") },
+                    supportingContent = { Text("Use live web search for up-to-date information") },
+                    trailingContent = {
+                        Switch(
+                            checked = settings.geminiSearch,
+                            onCheckedChange = { onUpdateGeminiSearch(it) }
+                        )
+                    }
                 )
             }
         }
