@@ -146,7 +146,7 @@ fun SettingsScreen(
             // Settings Section
             SectionHeader("Settings")
 
-            // Continuous Listening - always visible
+            // Continuous Listening - always available
             ListItem(
                 headlineContent = { Text("Continuous Listening") },
                 supportingContent = { Text("Keep listening after silence (for long sessions)") },
@@ -158,33 +158,110 @@ fun SettingsScreen(
                 }
             )
 
-            // Car Mode - only visible with feature flag
-            if (secureStorage.hasFeatureFlag(SecureStorage.FLAG_CAR_MODE)) {
-                ListItem(
-                    headlineContent = { Text("Car Mode") },
-                    supportingContent = { Text("Route audio through Bluetooth hands-free (appears as phone call)") },
-                    trailingContent = {
-                        Switch(
-                            checked = settings.carMode,
-                            onCheckedChange = { onUpdateCarMode(it) }
-                        )
-                    }
-                )
-            }
+            // Car Mode - greyed out if no feature flag
+            val hasCarMode = secureStorage.hasFeatureFlag(SecureStorage.FLAG_CAR_MODE)
+            ListItem(
+                headlineContent = {
+                    Text(
+                        "Car Mode",
+                        color = if (hasCarMode) MaterialTheme.colorScheme.onSurface
+                               else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    )
+                },
+                supportingContent = {
+                    Text(
+                        if (hasCarMode) "Route audio through Bluetooth hands-free"
+                        else "Coming soon",
+                        color = if (hasCarMode) MaterialTheme.colorScheme.onSurfaceVariant
+                               else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                    )
+                },
+                trailingContent = {
+                    Switch(
+                        checked = settings.carMode && hasCarMode,
+                        onCheckedChange = { if (hasCarMode) onUpdateCarMode(it) },
+                        enabled = hasCarMode
+                    )
+                }
+            )
 
-            // Gemini Search - only visible with feature flag
-            if (secureStorage.hasFeatureFlag(SecureStorage.FLAG_GEMINI_SEARCH)) {
-                ListItem(
-                    headlineContent = { Text("Gemini Search") },
-                    supportingContent = { Text("Use live web search for up-to-date information") },
-                    trailingContent = {
-                        Switch(
-                            checked = settings.geminiSearch,
-                            onCheckedChange = { onUpdateGeminiSearch(it) }
-                        )
-                    }
-                )
-            }
+            // Gemini Search - greyed out if no feature flag
+            val hasGeminiSearch = secureStorage.hasFeatureFlag(SecureStorage.FLAG_GEMINI_SEARCH)
+            ListItem(
+                headlineContent = {
+                    Text(
+                        "Gemini Search",
+                        color = if (hasGeminiSearch) MaterialTheme.colorScheme.onSurface
+                               else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    )
+                },
+                supportingContent = {
+                    Text(
+                        if (hasGeminiSearch) "Use live web search for up-to-date information"
+                        else "Coming soon",
+                        color = if (hasGeminiSearch) MaterialTheme.colorScheme.onSurfaceVariant
+                               else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                    )
+                },
+                trailingContent = {
+                    Switch(
+                        checked = settings.geminiSearch && hasGeminiSearch,
+                        onCheckedChange = { if (hasGeminiSearch) onUpdateGeminiSearch(it) },
+                        enabled = hasGeminiSearch
+                    )
+                }
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+
+            // Integrations Section (coming soon teasers)
+            SectionHeader("Integrations")
+
+            // Spotify - coming soon
+            ListItem(
+                headlineContent = {
+                    Text(
+                        "Spotify",
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    )
+                },
+                supportingContent = {
+                    Text(
+                        "Control music playback with voice",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                    )
+                },
+                trailingContent = {
+                    Switch(
+                        checked = false,
+                        onCheckedChange = { },
+                        enabled = false
+                    )
+                }
+            )
+
+            // Home Assistant - coming soon
+            ListItem(
+                headlineContent = {
+                    Text(
+                        "Home Assistant",
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    )
+                },
+                supportingContent = {
+                    Text(
+                        "Control your smart home with voice",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                    )
+                },
+                trailingContent = {
+                    Switch(
+                        checked = false,
+                        onCheckedChange = { },
+                        enabled = false
+                    )
+                }
+            )
         }
     }
 
