@@ -164,6 +164,11 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
                             isListening = false,
                             partialSpeech = ""
                         )
+                        // In car mode, keep mic active to maintain Bluetooth SCO connection
+                        // while LLM is processing (will be stopped when TTS starts)
+                        if (currentSettings.carMode) {
+                            speechManager.startListeningSilent()
+                        }
                         handleUserQuery(state.text)
                     }
                     is SpeechState.Error -> {
@@ -379,6 +384,9 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     private fun speakResponse(text: String) {
+        // Stop listening before speaking (important for car mode where mic stays active)
+        speechManager.stopListening()
+
         when (currentSettings.ttsEngine) {
             TtsEngine.CARTESIA -> {
                 cartesiaTts?.speak(text, voiceId = currentSettings.cartesiaVoice)
