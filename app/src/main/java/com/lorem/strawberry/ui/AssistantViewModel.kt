@@ -199,7 +199,8 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
                 if (currentSettings.ttsEngine == TtsEngine.CHIRP) {
                     _uiState.value = _uiState.value.copy(isSpeaking = speaking)
                     // Auto-start listening when TTS finishes (silently to avoid beep)
-                    if (wasSpeaking && !speaking) {
+                    // In car mode, mic is already running to keep SCO alive
+                    if (wasSpeaking && !speaking && !currentSettings.carMode) {
                         Log.d(TAG, "Chirp TTS finished, triggering silent auto-listen")
                         viewModelScope.launch {
                             kotlinx.coroutines.delay(300)
@@ -223,7 +224,8 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
                         ttsLatencyMs = if (!speaking) null else _uiState.value.ttsLatencyMs
                     )
                     // Auto-start listening when TTS finishes (silently to avoid beep)
-                    if (wasSpeaking && !speaking) {
+                    // In car mode, mic is already running to keep SCO alive
+                    if (wasSpeaking && !speaking && !currentSettings.carMode) {
                         Log.d(TAG, "Cartesia TTS finished, triggering silent auto-listen")
                         viewModelScope.launch {
                             kotlinx.coroutines.delay(300)
@@ -251,7 +253,8 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
                 if (currentSettings.ttsEngine == TtsEngine.LOCAL) {
                     _uiState.value = _uiState.value.copy(isSpeaking = speaking)
                     // Auto-start listening when TTS finishes (silently to avoid beep)
-                    if (wasSpeaking && !speaking) {
+                    // In car mode, mic is already running to keep SCO alive
+                    if (wasSpeaking && !speaking && !currentSettings.carMode) {
                         Log.d(TAG, "Local TTS finished, triggering silent auto-listen")
                         viewModelScope.launch {
                             kotlinx.coroutines.delay(300)
@@ -384,8 +387,11 @@ class AssistantViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     private fun speakResponse(text: String) {
-        // Stop listening before speaking (important for car mode where mic stays active)
-        speechManager.stopListening()
+        // In car mode, keep mic active to maintain Bluetooth SCO - TTS will play over it
+        // In normal mode, stop listening to avoid feedback
+        if (!currentSettings.carMode) {
+            speechManager.stopListening()
+        }
 
         when (currentSettings.ttsEngine) {
             TtsEngine.CARTESIA -> {
