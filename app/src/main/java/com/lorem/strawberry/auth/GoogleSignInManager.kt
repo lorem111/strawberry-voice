@@ -8,6 +8,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.lorem.strawberry.BuildConfig
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 private const val TAG = "GoogleSignInManager"
 
@@ -47,6 +49,29 @@ class GoogleSignInManager(context: Context) {
         } catch (e: ApiException) {
             Log.e(TAG, "Sign-in failed with code ${e.statusCode}: ${e.message}", e)
             Result.failure(Exception("Sign-in failed: ${e.statusCode} - ${e.message}"))
+        }
+    }
+
+    /**
+     * Silently obtain a fresh ID token for the already-signed-in Google account,
+     * without showing UI. Used to bootstrap a session token for users who signed
+     * in before session tokens existed. Fails if no account is cached or Google
+     * requires interactive re-consent.
+     */
+    suspend fun silentSignIn(): Result<String> = suspendCancellableCoroutine { cont ->
+        googleSignInClient.silentSignIn().addOnCompleteListener { task ->
+            try {
+                val account = task.getResult(ApiException::class.java)
+                val idToken = account?.idToken
+                if (idToken != null) {
+                    cont.resume(Result.success(idToken))
+                } else {
+                    cont.resume(Result.failure(Exception("Silent sign-in returned no ID token")))
+                }
+            } catch (e: Exception) {
+                Log.d(TAG, "Silent sign-in failed: ${e.message}")
+                cont.resume(Result.failure(e))
+            }
         }
     }
 

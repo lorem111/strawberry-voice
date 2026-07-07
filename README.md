@@ -7,6 +7,8 @@ Download at: [https://github.com/lorem111/strawberry-voice/releases](https://git
 ## Features
 
 - **Voice Input**: Tap the mic to speak, automatic speech recognition
+- **Text & Images**: Type messages and attach photos (multimodal models)
+- **Chat Threads**: ChatGPT-style drawer with persistent, switchable conversations
 - **AI Chat**: Powered by OpenRouter (supports multiple LLM models)
 - **Streaming TTS**: Ultra-low latency voice responses with Cartesia Sonic
 - **Auto-conversation**: Automatically resumes listening after AI responds
@@ -57,10 +59,19 @@ See the `authserver/` directory for the Vercel backend that handles:
 
 ## Architecture
 
-- **Speech Recognition**: Android's built-in SpeechRecognizer
-- **LLM**: OpenRouter API with streaming support
-- **TTS**: Cartesia Sonic with HTTP streaming for low latency
-- **UI**: Jetpack Compose with Material 3
+The app is organized by feature, with the voice loop driven by a small state machine:
+
+- **`core/`** — interfaces everything else implements: `TtsEngine`, `LlmClient`, `SpeechInput`, `ScoController`, plus `AppLogger`/`DebugLog` (in-app log ring buffer for admins)
+- **`conversation/`** — `ConversationOrchestrator` owns the listen → think → speak → listen loop as a sealed `ConversationState` machine; `AssistantViewModel` is a thin UI mapper; `ConversationService` keeps audio alive in the background
+- **`tts/`** — Cartesia (streaming), Google Chirp 3 HD, local Android TTS
+- **`llm/`** — OpenRouter and Gemini (with Google Search grounding)
+- **`audio/`** — SpeechRecognizer wrapper and Bluetooth SCO (car mode)
+- **`chat/`** — Room-backed thread persistence (`ChatStore`) and `ImageStore` (image import + base64 for LLM payloads)
+- **`di/`** — Hilt modules and `EngineRegistry`, which watches settings/API keys and swaps engines at runtime
+
+Adding a new TTS or LLM = implement the `core/` interface, wire it in `EngineRegistry`.
+
+Unit tests cover the conversation state machine (`app/src/test/`); CI runs lint + tests on every push.
 
 ## Tech Stack
 

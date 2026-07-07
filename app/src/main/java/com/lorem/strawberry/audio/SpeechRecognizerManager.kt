@@ -1,4 +1,4 @@
-package com.lorem.strawberry.speech
+package com.lorem.strawberry.audio
 
 import android.content.Context
 import android.content.Intent
@@ -9,37 +9,39 @@ import android.os.Looper
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
-import android.util.Log
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import javax.inject.Inject
+import javax.inject.Singleton
+import com.lorem.strawberry.core.AppLogger
+import com.lorem.strawberry.core.SpeechInput
+import com.lorem.strawberry.core.SpeechState
 
 private const val TAG = "SpeechRecognizerManager"
 
-sealed class SpeechState {
-    data object Idle : SpeechState()
-    data object Listening : SpeechState()
-    data class Result(val text: String) : SpeechState()
-    data class Error(val message: String) : SpeechState()
-}
-
-class SpeechRecognizerManager(private val context: Context) {
+@Singleton
+class SpeechRecognizerManager @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val logger: AppLogger
+) : SpeechInput {
 
     private var speechRecognizer: SpeechRecognizer? = null
     private var retryCount = 0
     private val maxRetries = 3
 
     private val _state = MutableStateFlow<SpeechState>(SpeechState.Idle)
-    val state: StateFlow<SpeechState> = _state.asStateFlow()
+    override val state: StateFlow<SpeechState> = _state.asStateFlow()
 
     private val _partialResults = MutableStateFlow("")
-    val partialResults: StateFlow<String> = _partialResults.asStateFlow()
+    override val partialResults: StateFlow<String> = _partialResults.asStateFlow()
 
     private val mainHandler = Handler(Looper.getMainLooper())
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
     // Continuous listening mode - auto-restart after silence/no match
-    var continuousListening: Boolean = false
+    override var continuousListening: Boolean = false
 
     // Flag to prevent auto-restart when manually stopped or when processing a result
     private var shouldAutoRestart: Boolean = true
@@ -49,7 +51,7 @@ class SpeechRecognizerManager(private val context: Context) {
 
     private val recognitionListener = object : RecognitionListener {
         override fun onReadyForSpeech(params: Bundle?) {
-            Log.d(TAG, "onReadyForSpeech")
+            logger.d(TAG, "onReadyForSpeech")
             retryCount = 0 // Reset retry count on success
             _state.value = SpeechState.Listening
             _partialResults.value = ""
@@ -63,7 +65,7 @@ class SpeechRecognizerManager(private val context: Context) {
         }
 
         override fun onBeginningOfSpeech() {
-            Log.d(TAG, "onBeginningOfSpeech")
+            logger.d(TAG, "onBeginningOfSpeech")
         }
 
         override fun onRmsChanged(rmsdB: Float) {}
@@ -71,24 +73,24 @@ class SpeechRecognizerManager(private val context: Context) {
         override fun onBufferReceived(buffer: ByteArray?) {}
 
         override fun onEndOfSpeech() {
-            Log.d(TAG, "onEndOfSpeech")
+            logger.d(TAG, "onEndOfSpeech")
         }
 
         override fun onError(error: Int) {
-            Log.d(TAG, "onError: $error, retryCount: $retryCount")
+            logger.d(TAG, "onError: $error, retryCount: $retryCount")
 
             // Error 11 (ERROR_CANNOT_CHECK_SUPPORT) often resolves itself
             // Wait a bit to see if onReadyForSpeech comes
             if (error == 11) {
-                Log.d(TAG, "Error 11, waiting to see if recognizer recovers...")
+                logger.d(TAG, "Error 11, waiting to see if recognizer recovers...")
                 // Schedule a retry check - if we're not in Listening state after 200ms, retry
                 mainHandler.postDelayed({
                     if (_state.value != SpeechState.Listening && retryCount < maxRetries) {
                         retryCount++
-                        Log.d(TAG, "Error 11 did not recover, retrying ($retryCount/$maxRetries)")
+                        logger.d(TAG, "Error 11 did not recover, retrying ($retryCount/$maxRetries)")
                         startListeningInternal()
                     } else if (_state.value != SpeechState.Listening) {
-                        Log.d(TAG, "Error 11 did not recover after max retries, going to idle")
+                        logger.d(TAG, "Error 11 did not recover after max retries, going to idle")
                         _state.value = SpeechState.Idle
                     }
                 }, 200)
@@ -101,12 +103,12 @@ class SpeechRecognizerManager(private val context: Context) {
                     error == SpeechRecognizer.ERROR_CLIENT
 
             if (isRecoverable) {
-                Log.d(TAG, "Recoverable error, going to idle")
+                logger.d(TAG, "Recoverable error, going to idle")
                 _state.value = SpeechState.Idle
 
                 // In continuous mode, auto-restart after silence/no match (silently)
                 if (continuousListening && shouldAutoRestart) {
-                    Log.d(TAG, "Continuous mode: auto-restarting silently after recoverable error")
+                    logger.d(TAG, "Continuous mode: auto-restarting silently after recoverable error")
                     mainHandler.postDelayed({
                         if (continuousListening && shouldAutoRestart) {
                             startListeningSilent()
@@ -131,7 +133,7 @@ class SpeechRecognizerManager(private val context: Context) {
         override fun onResults(results: Bundle?) {
             val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
             val text = matches?.firstOrNull() ?: ""
-            Log.d(TAG, "onResults: $text")
+            logger.d(TAG, "onResults: $text")
             _state.value = if (text.isNotEmpty()) {
                 SpeechState.Result(text)
             } else {
@@ -147,12 +149,12 @@ class SpeechRecognizerManager(private val context: Context) {
         override fun onEvent(eventType: Int, params: Bundle?) {}
     }
 
-    fun startListening() {
-        Log.d(TAG, "startListening() called")
+    override fun startListening() {
+        logger.d(TAG, "startListening() called")
         retryCount = 0
         shouldAutoRestart = true  // Re-enable auto-restart when starting
         if (!SpeechRecognizer.isRecognitionAvailable(context)) {
-            Log.e(TAG, "Speech recognition not available")
+            logger.e(TAG, "Speech recognition not available")
             _state.value = SpeechState.Error("Speech recognition not available")
             return
         }
@@ -162,12 +164,12 @@ class SpeechRecognizerManager(private val context: Context) {
     /**
      * Start listening silently (mute the beep) - used for continuous mode restarts.
      */
-    fun startListeningSilent() {
-        Log.d(TAG, "startListeningSilent() called")
+    override fun startListeningSilent() {
+        logger.d(TAG, "startListeningSilent() called")
         retryCount = 0
         shouldAutoRestart = true
         if (!SpeechRecognizer.isRecognitionAvailable(context)) {
-            Log.e(TAG, "Speech recognition not available")
+            logger.e(TAG, "Speech recognition not available")
             _state.value = SpeechState.Error("Speech recognition not available")
             return
         }
@@ -175,7 +177,7 @@ class SpeechRecognizerManager(private val context: Context) {
     }
 
     private fun startListeningInternal(silent: Boolean = false) {
-        Log.d(TAG, "startListeningInternal() called, retryCount: $retryCount, silent: $silent")
+        logger.d(TAG, "startListeningInternal() called, retryCount: $retryCount, silent: $silent")
 
         // Mute beep if silent mode requested
         if (silent) {
@@ -184,18 +186,18 @@ class SpeechRecognizerManager(private val context: Context) {
 
         mainHandler.post {
             try {
-                Log.d(TAG, "Destroying old recognizer")
+                logger.d(TAG, "Destroying old recognizer")
                 speechRecognizer?.destroy()
                 speechRecognizer = null
 
                 // Small delay to let the old recognizer fully release
                 mainHandler.postDelayed({
                     try {
-                        Log.d(TAG, "Creating new SpeechRecognizer")
+                        logger.d(TAG, "Creating new SpeechRecognizer")
                         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
 
                         if (speechRecognizer == null) {
-                            Log.e(TAG, "Failed to create SpeechRecognizer")
+                            logger.e(TAG, "Failed to create SpeechRecognizer")
                             _state.value = SpeechState.Error("Failed to create speech recognizer")
                             return@postDelayed
                         }
@@ -208,21 +210,21 @@ class SpeechRecognizerManager(private val context: Context) {
                             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
                         }
 
-                        Log.d(TAG, "Calling speechRecognizer.startListening()")
+                        logger.d(TAG, "Calling speechRecognizer.startListening()")
                         speechRecognizer?.startListening(intent)
-                        Log.d(TAG, "speechRecognizer.startListening() called successfully")
+                        logger.d(TAG, "speechRecognizer.startListening() called successfully")
                     } catch (e: Exception) {
-                        Log.e(TAG, "Error creating/starting speech recognition", e)
+                        logger.e(TAG, "Error creating/starting speech recognition", e)
                         _state.value = SpeechState.Error("Failed to start: ${e.message}")
                     }
                 }, 100) // 100ms delay after destroy
             } catch (e: Exception) {
-                Log.e(TAG, "Error destroying speech recognition", e)
+                logger.e(TAG, "Error destroying speech recognition", e)
             }
         }
     }
 
-    fun stopListening() {
+    override fun stopListening() {
         shouldAutoRestart = false
         speechRecognizer?.stopListening()
     }
@@ -242,12 +244,12 @@ class SpeechRecognizerManager(private val context: Context) {
         shouldAutoRestart = true
     }
 
-    fun resetState() {
+    override fun resetState() {
         _state.value = SpeechState.Idle
         _partialResults.value = ""
     }
 
-    fun destroy() {
+    override fun destroy() {
         shouldAutoRestart = false
         unmuteBeep() // Ensure we don't leave audio muted
         speechRecognizer?.destroy()
@@ -272,9 +274,9 @@ class SpeechRecognizerManager(private val context: Context) {
                 audioManager.setStreamMute(AudioManager.STREAM_MUSIC, true)
             }
             didMuteAudio = true
-            Log.d(TAG, "Muted beep sound")
+            logger.d(TAG, "Muted beep sound")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to mute beep", e)
+            logger.e(TAG, "Failed to mute beep", e)
         }
     }
 
@@ -295,9 +297,9 @@ class SpeechRecognizerManager(private val context: Context) {
                 audioManager.setStreamMute(AudioManager.STREAM_MUSIC, false)
             }
             didMuteAudio = false
-            Log.d(TAG, "Unmuted beep sound")
+            logger.d(TAG, "Unmuted beep sound")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to unmute beep", e)
+            logger.e(TAG, "Failed to unmute beep", e)
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.lorem.strawberry.ui
+package com.lorem.strawberry.auth
 
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -11,10 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.lorem.strawberry.auth.AuthService
-import com.lorem.strawberry.auth.GoogleSignInManager
-import com.lorem.strawberry.auth.SecureStorage
-import com.lorem.strawberry.data.UsageLogger
+import com.lorem.strawberry.telemetry.UsageLogger
 import kotlinx.coroutines.launch
 
 private const val TAG = "SignInScreen"
@@ -50,8 +47,9 @@ fun SignInScreen(
                             onSuccess = { response ->
                                 Log.d(TAG, "Auth successful, saving credentials...")
                                 secureStorage.saveAuthResponse(response)
-                                // Set email for usage logging immediately
+                                // Set email + session for usage logging immediately
                                 UsageLogger.setUserEmail(response.user?.email)
+                                UsageLogger.setSessionToken(secureStorage.sessionToken)
                                 isLoading = false
                                 onSignInComplete()
                             },

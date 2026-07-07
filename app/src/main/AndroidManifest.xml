@@ -17,8 +17,11 @@
 
     <!-- Required for foreground service (voice interaction) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
+        android:name=".StrawberryApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -41,6 +44,12 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
+        <!-- Foreground service keeping the conversation alive when backgrounded -->
+        <service
+            android:name=".conversation.ConversationService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
 
         <!-- Voice Interaction Service - makes app available as system assistant -->
         <service

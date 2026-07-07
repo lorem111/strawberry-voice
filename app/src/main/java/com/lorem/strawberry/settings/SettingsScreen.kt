@@ -1,4 +1,4 @@
-package com.lorem.strawberry.ui
+package com.lorem.strawberry.settings
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -6,17 +6,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.lorem.strawberry.BuildConfig
 import com.lorem.strawberry.auth.SecureStorage
-import com.lorem.strawberry.data.AppSettings
-import com.lorem.strawberry.data.TtsEngine
-import com.lorem.strawberry.speech.availableCartesiaVoices
-import com.lorem.strawberry.speech.availableTtsVoices
+import com.lorem.strawberry.tts.availableCartesiaVoices
+import com.lorem.strawberry.tts.availableTtsVoices
 
 // ============================================================================
 // DO NOT MODIFY THESE MODEL IDS - They must match OpenRouter's exact model IDs
@@ -30,10 +30,19 @@ val availableLlmModels = listOf(
 )
 
 val availableTtsEngines = listOf(
-    TtsEngine.CARTESIA to "Cartesia Sonic (Streaming, Fast)",
-    TtsEngine.CHIRP to "Chirp 3 HD (Cloud, High Quality)",
-    TtsEngine.LOCAL to "Local TTS (Device, Offline)",
+    TtsEngineId.CARTESIA to "Cartesia Sonic (Streaming, Fast)",
+    TtsEngineId.CHIRP to "Chirp 3 HD (Cloud, High Quality)",
+    TtsEngineId.LOCAL to "Local TTS (Device, Offline)",
 )
+
+/** True when the signed-in user may see developer tooling (in-app debug log). */
+fun isAdminUser(email: String?): Boolean {
+    if (email.isNullOrBlank()) return false
+    return BuildConfig.ADMIN_EMAILS.split(",")
+        .map { it.trim().lowercase() }
+        .filter { it.isNotEmpty() }
+        .contains(email.trim().lowercase())
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +57,8 @@ fun SettingsScreen(
     onUpdateContinuousListening: (Boolean) -> Unit,
     onUpdateCarMode: (Boolean) -> Unit,
     onUpdateGeminiSearch: (Boolean) -> Unit,
+    onUpdateBargeIn: (Boolean) -> Unit,
+    onNavigateToDebugLog: () -> Unit,
     onSignOut: () -> Unit
 ) {
     var showVoiceDialog by remember { mutableStateOf(false) }
@@ -119,7 +130,7 @@ fun SettingsScreen(
             )
 
             // Show voice selection based on engine
-            if (settings.ttsEngine == TtsEngine.CHIRP) {
+            if (settings.ttsEngine == TtsEngineId.CHIRP) {
                 val currentVoiceName = availableTtsVoices.find { it.first == settings.ttsVoice }?.second
                     ?: settings.ttsVoice
 
@@ -130,7 +141,7 @@ fun SettingsScreen(
                 )
             }
 
-            if (settings.ttsEngine == TtsEngine.CARTESIA) {
+            if (settings.ttsEngine == TtsEngineId.CARTESIA) {
                 val currentCartesiaVoiceName = availableCartesiaVoices.find { it.first == settings.cartesiaVoice }?.second
                     ?: settings.cartesiaVoice
 
@@ -154,6 +165,18 @@ fun SettingsScreen(
                     Switch(
                         checked = settings.continuousListening,
                         onCheckedChange = { onUpdateContinuousListening(it) }
+                    )
+                }
+            )
+
+            // Barge-in - interrupt the assistant by talking over it
+            ListItem(
+                headlineContent = { Text("Voice Interruption") },
+                supportingContent = { Text("Talk over the assistant to interrupt it (experimental, may mishear itself outside car mode)") },
+                trailingContent = {
+                    Switch(
+                        checked = settings.bargeIn,
+                        onCheckedChange = { onUpdateBargeIn(it) }
                     )
                 }
             )
@@ -262,6 +285,22 @@ fun SettingsScreen(
                     )
                 }
             )
+
+            // Developer section - only for admin accounts
+            if (isAdminUser(secureStorage.userEmail)) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+
+                SectionHeader("Developer")
+
+                ListItem(
+                    headlineContent = { Text("Debug Log") },
+                    supportingContent = { Text("In-app log of recent activity and errors") },
+                    leadingContent = {
+                        Icon(Icons.Default.BugReport, contentDescription = null)
+                    },
+                    modifier = Modifier.clickable { onNavigateToDebugLog() }
+                )
+            }
         }
     }
 

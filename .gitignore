@@ -1,26 +1,32 @@
-*.iml
-.gradle
-/local.properties
-/.idea
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
-*.apk
-*.aab
-
-# App build outputs
+# Gradle
+.gradle/
+build/
 app/build/
-app/release/
+.kotlin/
 
-# Keystore files (keep private!)
+# Local machine config (SDK path, client IDs, admin emails)
+local.properties
+secrets.properties
+
+# Signing — never commit keystores
 *.jks
 *.keystore
 
-# Secrets
-secrets.properties
+# Build outputs
+*.apk
+*.aab
+app/release/
 
-# Auth server (deployed separately)
-authserver/
+# Local dev tooling (contains machine-specific IPs)
+build.bat
+
+# IDE
+.idea/
+*.iml
+captures/
+.externalNativeBuild
+.cxx
+
+# OS
+.DS_Store
+Thumbs.db
