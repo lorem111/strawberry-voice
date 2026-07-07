@@ -276,11 +276,12 @@ class ConversationOrchestratorTest {
         runCurrent()
 
         // First complete sentence is already playing while the rest streams/queues
-        assertEquals(listOf("Hello there.", "How are you today"), tts.spoken)
+        assertEquals(listOf("Hello there."), tts.spoken)
         assertEquals(ConversationState.Speaking, orchestrator.state.value)
 
-        tts.finishSpeaking() // first sentence done
+        tts.finishSpeaking() // first sentence done -> queued sentence starts
         runCurrent()
+        assertEquals(listOf("Hello there.", "How are you today"), tts.spoken)
         assertEquals(ConversationState.Speaking, orchestrator.state.value)
 
         tts.finishSpeaking() // second sentence done -> session drains
