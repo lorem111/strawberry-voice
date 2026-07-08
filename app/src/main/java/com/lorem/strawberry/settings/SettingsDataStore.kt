@@ -61,7 +61,6 @@ class SettingsDataStore @Inject constructor(
         val GOOGLE_CLOUD_API_KEY = stringPreferencesKey("google_cloud_api_key")
         val LLM_MODEL = stringPreferencesKey("llm_model")
         val TTS_ENGINE = stringPreferencesKey("tts_engine")
-        val TTS_VOICE = stringPreferencesKey("tts_voice")
         val CARTESIA_VOICE = stringPreferencesKey("cartesia_voice")
         val CONTINUOUS_LISTENING = booleanPreferencesKey("continuous_listening")
         val CAR_MODE = booleanPreferencesKey("car_mode")
@@ -74,8 +73,9 @@ class SettingsDataStore @Inject constructor(
             openRouterApiKey = prefs[Keys.OPENROUTER_API_KEY] ?: "",
             googleCloudApiKey = prefs[Keys.GOOGLE_CLOUD_API_KEY] ?: "",
             llmModel = prefs[Keys.LLM_MODEL] ?: "google/gemini-3-flash-preview",
-            ttsEngine = prefs[Keys.TTS_ENGINE] ?: TtsEngineId.CARTESIA,
-            ttsVoice = prefs[Keys.TTS_VOICE] ?: "Kore",
+            // Migrate users off the removed Chirp engine onto the default.
+            ttsEngine = (prefs[Keys.TTS_ENGINE] ?: TtsEngineId.CARTESIA)
+                .let { if (it == "chirp") TtsEngineId.CARTESIA else it },
             cartesiaVoice = prefs[Keys.CARTESIA_VOICE] ?: "6f84f4b8-58a2-430c-8c79-688dad597532",
             continuousListening = prefs[Keys.CONTINUOUS_LISTENING] ?: false,
             carMode = prefs[Keys.CAR_MODE] ?: false,
@@ -105,12 +105,6 @@ class SettingsDataStore @Inject constructor(
     suspend fun updateTtsEngine(engine: String) {
         context.dataStore.edit { prefs ->
             prefs[Keys.TTS_ENGINE] = engine
-        }
-    }
-
-    suspend fun updateTtsVoice(voice: String) {
-        context.dataStore.edit { prefs ->
-            prefs[Keys.TTS_VOICE] = voice
         }
     }
 

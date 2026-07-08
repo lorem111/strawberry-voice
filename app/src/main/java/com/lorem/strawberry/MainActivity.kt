@@ -117,7 +117,6 @@ fun MainNavigation(
                 onNavigateBack = { navController.popBackStack() },
                 onUpdateLlmModel = { scope.launch { settingsDataStore.updateLlmModel(it) } },
                 onUpdateTtsEngine = { scope.launch { settingsDataStore.updateTtsEngine(it) } },
-                onUpdateTtsVoice = { scope.launch { settingsDataStore.updateTtsVoice(it) } },
                 onUpdateCartesiaVoice = { scope.launch { settingsDataStore.updateCartesiaVoice(it) } },
                 onUpdateContinuousListening = { scope.launch { settingsDataStore.updateContinuousListening(it) } },
                 onUpdateCarMode = { scope.launch { settingsDataStore.updateCarMode(it) } },

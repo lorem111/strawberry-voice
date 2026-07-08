@@ -13,7 +13,6 @@ import com.lorem.strawberry.settings.AppSettings
 import com.lorem.strawberry.settings.SettingsDataStore
 import com.lorem.strawberry.settings.TtsEngineId
 import com.lorem.strawberry.tts.CartesiaTTS
-import com.lorem.strawberry.tts.GoogleCloudTTS
 import com.lorem.strawberry.tts.LocalTTS
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -58,7 +57,6 @@ class EngineRegistry @Inject constructor(
     val activeLlm: StateFlow<LlmClient?> = _activeLlm.asStateFlow()
 
     private var cartesia: CartesiaTTS? = null
-    private var chirp: GoogleCloudTTS? = null
     private var local: LocalTTS? = null
     private var openRouter: OpenRouterApi? = null
     private var gemini: GeminiApi? = null
@@ -93,16 +91,11 @@ class EngineRegistry @Inject constructor(
         openRouter?.model = settings.llmModel
 
         if (old == null || settings.googleCloudApiKey != old.googleCloudApiKey) {
-            chirp?.destroy()
             gemini?.close()
-            if (settings.googleCloudApiKey.isNotBlank()) {
-                logger.d(TAG, "Creating Google Cloud TTS + Gemini clients")
-                chirp = GoogleCloudTTS(settings.googleCloudApiKey, logger)
-                gemini = GeminiApi(settings.googleCloudApiKey, logger, imageEncoder)
-            } else {
-                chirp = null
-                gemini = null
-            }
+            gemini = if (settings.googleCloudApiKey.isNotBlank()) {
+                logger.d(TAG, "Creating Gemini client")
+                GeminiApi(settings.googleCloudApiKey, logger, imageEncoder)
+            } else null
         }
 
         // Cartesia availability is gated on being signed in (having a session token);
@@ -120,14 +113,12 @@ class EngineRegistry @Inject constructor(
         }
 
         cartesia?.voice = settings.cartesiaVoice
-        chirp?.voice = settings.ttsVoice
-        listOfNotNull(cartesia, chirp, local).forEach {
+        listOfNotNull(cartesia, local).forEach {
             it.useVoiceCommunication = settings.carMode
         }
 
         _activeTts.value = when (settings.ttsEngine) {
             TtsEngineId.CARTESIA -> cartesia
-            TtsEngineId.CHIRP -> chirp
             else -> local
         }
         _activeLlm.value = if (settings.geminiSearch) gemini else openRouter

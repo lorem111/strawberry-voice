@@ -65,39 +65,3 @@ val availableCartesiaVoices = listOf(
 object CartesiaVoices {
     const val DEFAULT = "6f84f4b8-58a2-430c-8c79-688dad597532" // Brooke - Big Sister
 }
-
-// Chirp 3 HD voices
-val availableTtsVoices = listOf(
-    // Female voices
-    "Kore" to "Kore (Female)",
-    "Aoede" to "Aoede (Female)",
-    "Leda" to "Leda (Female)",
-    "Zephyr" to "Zephyr (Female)",
-    "Achernar" to "Achernar (Female)",
-    "Autonoe" to "Autonoe (Female)",
-    "Callirrhoe" to "Callirrhoe (Female)",
-    "Despina" to "Despina (Female)",
-    "Erinome" to "Erinome (Female)",
-    "Gacrux" to "Gacrux (Female)",
-    "Laomedeia" to "Laomedeia (Female)",
-    "Pulcherrima" to "Pulcherrima (Female)",
-    "Sulafat" to "Sulafat (Female)",
-    "Vindemiatrix" to "Vindemiatrix (Female)",
-    // Male voices
-    "Charon" to "Charon (Male)",
-    "Fenrir" to "Fenrir (Male)",
-    "Puck" to "Puck (Male)",
-    "Orus" to "Orus (Male)",
-    "Achird" to "Achird (Male)",
-    "Algenib" to "Algenib (Male)",
-    "Algieba" to "Algieba (Male)",
-    "Alnilam" to "Alnilam (Male)",
-    "Enceladus" to "Enceladus (Male)",
-    "Iapetus" to "Iapetus (Male)",
-    "Rasalgethi" to "Rasalgethi (Male)",
-    "Sadachbia" to "Sadachbia (Male)",
-    "Sadaltager" to "Sadaltager (Male)",
-    "Schedar" to "Schedar (Male)",
-    "Umbriel" to "Umbriel (Male)",
-    "Zubenelgenubi" to "Zubenelgenubi (Male)",
-)

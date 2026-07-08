@@ -16,7 +16,6 @@ import androidx.compose.ui.unit.dp
 import com.lorem.strawberry.BuildConfig
 import com.lorem.strawberry.auth.SecureStorage
 import com.lorem.strawberry.tts.availableCartesiaVoices
-import com.lorem.strawberry.tts.availableTtsVoices
 
 // ============================================================================
 // DO NOT MODIFY THESE MODEL IDS - They must match OpenRouter's exact model IDs
@@ -31,7 +30,6 @@ val availableLlmModels = listOf(
 
 val availableTtsEngines = listOf(
     TtsEngineId.CARTESIA to "Cartesia Sonic (Streaming, Fast)",
-    TtsEngineId.CHIRP to "Chirp 3 HD (Cloud, High Quality)",
     TtsEngineId.LOCAL to "Local TTS (Device, Offline)",
 )
 
@@ -52,7 +50,6 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onUpdateLlmModel: (String) -> Unit,
     onUpdateTtsEngine: (String) -> Unit,
-    onUpdateTtsVoice: (String) -> Unit,
     onUpdateCartesiaVoice: (String) -> Unit,
     onUpdateContinuousListening: (Boolean) -> Unit,
     onUpdateCarMode: (Boolean) -> Unit,
@@ -61,7 +58,6 @@ fun SettingsScreen(
     onNavigateToDebugLog: () -> Unit,
     onSignOut: () -> Unit
 ) {
-    var showVoiceDialog by remember { mutableStateOf(false) }
     var showCartesiaVoiceDialog by remember { mutableStateOf(false) }
     var showLlmModelDialog by remember { mutableStateOf(false) }
     var showTtsEngineDialog by remember { mutableStateOf(false) }
@@ -130,17 +126,6 @@ fun SettingsScreen(
             )
 
             // Show voice selection based on engine
-            if (settings.ttsEngine == TtsEngineId.CHIRP) {
-                val currentVoiceName = availableTtsVoices.find { it.first == settings.ttsVoice }?.second
-                    ?: settings.ttsVoice
-
-                ListItem(
-                    headlineContent = { Text("Voice") },
-                    supportingContent = { Text(currentVoiceName) },
-                    modifier = Modifier.clickable { showVoiceDialog = true }
-                )
-            }
-
             if (settings.ttsEngine == TtsEngineId.CARTESIA) {
                 val currentCartesiaVoiceName = availableCartesiaVoices.find { it.first == settings.cartesiaVoice }?.second
                     ?: settings.cartesiaVoice
@@ -302,49 +287,6 @@ fun SettingsScreen(
                 )
             }
         }
-    }
-
-    // Voice Selection Dialog (Chirp voices)
-    if (showVoiceDialog) {
-        AlertDialog(
-            onDismissRequest = { showVoiceDialog = false },
-            title = { Text("Select Voice") },
-            text = {
-                Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState())
-                ) {
-                    availableTtsVoices.forEach { (voiceId, voiceName) ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    onUpdateTtsVoice(voiceId)
-                                    showVoiceDialog = false
-                                }
-                                .padding(vertical = 12.dp)
-                        ) {
-                            RadioButton(
-                                selected = voiceId == settings.ttsVoice,
-                                onClick = {
-                                    onUpdateTtsVoice(voiceId)
-                                    showVoiceDialog = false
-                                }
-                            )
-                            Text(
-                                voiceName,
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.padding(start = 8.dp)
-                            )
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showVoiceDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
     }
 
     // LLM Model Selection Dialog

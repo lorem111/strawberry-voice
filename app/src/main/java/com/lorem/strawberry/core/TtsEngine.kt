@@ -15,8 +15,8 @@ sealed interface TtsState {
 }
 
 /**
- * A speech synthesizer. Implementations: CartesiaTTS (streaming), GoogleCloudTTS (Chirp),
- * LocalTTS (on-device). New engines only need to implement this and be wired in EngineRegistry.
+ * A speech synthesizer. Implementations: CartesiaTTS (streaming), LocalTTS (on-device).
+ * New engines only need to implement this and be wired in EngineRegistry.
  */
 interface TtsEngine {
     /** Stable id matching [com.lorem.strawberry.settings.TtsEngineId]. */
