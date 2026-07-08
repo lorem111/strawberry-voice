@@ -36,7 +36,9 @@ data class OrRequestMessage(
 
 @Serializable
 data class StreamOptions(
-    val include: Boolean = true
+    // No default: kotlinx omits default-valued fields (encodeDefaults=false), which
+    // would send `usage:{}` and make OpenRouter reject the request with a 400.
+    val include: Boolean
 )
 
 @Serializable
@@ -190,7 +192,7 @@ class OpenRouterApi(
         return try {
             client.preparePost(API_URL) {
                 applyHeaders()
-                setBody(ChatRequest(model = model, messages = messages, stream = true, usage = StreamOptions()))
+                setBody(ChatRequest(model = model, messages = messages, stream = true, usage = StreamOptions(include = true)))
             }.execute { response ->
                 if (response.status.value != 200) {
                     val errorBody = response.bodyAsText()
