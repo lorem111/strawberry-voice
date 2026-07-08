@@ -128,6 +128,11 @@ class OpenRouterApi(
 
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
+    /** When true, route through OpenRouter's web-search plugin (":online" = default Exa search). */
+    var webSearch: Boolean = false
+
+    private fun requestModel(): String = if (webSearch) "$model:online" else model
+
     override suspend fun chat(
         history: List<ChatTurn>,
         systemPrompt: String?,
@@ -152,7 +157,7 @@ class OpenRouterApi(
         return try {
             val response: ChatResponse = client.post(API_URL) {
                 applyHeaders()
-                setBody(ChatRequest(model = model, messages = messages))
+                setBody(ChatRequest(model = requestModel(), messages = messages))
             }.body()
 
             val durationMs = System.currentTimeMillis() - startTime
@@ -192,7 +197,7 @@ class OpenRouterApi(
         return try {
             client.preparePost(API_URL) {
                 applyHeaders()
-                setBody(ChatRequest(model = model, messages = messages, stream = true, usage = StreamOptions(include = true)))
+                setBody(ChatRequest(model = requestModel(), messages = messages, stream = true, usage = StreamOptions(include = true)))
             }.execute { response ->
                 if (response.status.value != 200) {
                     val errorBody = response.bodyAsText()

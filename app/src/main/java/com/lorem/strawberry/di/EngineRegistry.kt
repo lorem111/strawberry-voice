@@ -89,6 +89,9 @@ class EngineRegistry @Inject constructor(
             } else null
         }
         openRouter?.model = settings.llmModel
+        // "Gemini Search" now routes through OpenRouter's web-search plugin (per-user key,
+        // spend-capped) instead of the quota-limited shared Google key.
+        openRouter?.webSearch = settings.geminiSearch
 
         if (old == null || settings.googleCloudApiKey != old.googleCloudApiKey) {
             gemini?.close()
@@ -121,7 +124,9 @@ class EngineRegistry @Inject constructor(
             TtsEngineId.CARTESIA -> cartesia
             else -> local
         }
-        _activeLlm.value = if (settings.geminiSearch) gemini else openRouter
+        // Search is served by OpenRouter web search now; the direct Gemini path is kept
+        // dormant (temporary — remove GeminiApi + googleCloudApiKey once this is settled).
+        _activeLlm.value = openRouter
 
         applied = settings
         _settings.value = settings
